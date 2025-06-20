@@ -1,0 +1,164 @@
+openapi: 3.0.0
+info:
+  title: Coding Judge API
+  version: 1.0.0
+  description: Backend APIs for a secure code judge platform.
+servers:
+  - url: http://localhost:5000/api
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Problem:
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string }
+        inputFormat: { type: string }
+        outputFormat: { type: string }
+        constraints: { type: string }
+        difficulty: { type: string }
+        testCases:
+          type: array
+          items:
+            type: object
+            properties:
+              input: { type: string }
+              expectedOutput: { type: string }
+
+    Submission:
+      type: object
+      properties:
+        problemId: { type: string }
+        language: { type: string }
+        code: { type: string }
+
+paths:
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, email, password]
+              properties:
+                username: { type: string }
+                email: { type: string }
+                password: { type: string }
+                role: { type: string, enum: [user, admin] }
+      responses:
+        201:
+          description: User registered
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Log in a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        200:
+          description: JWT token returned
+
+  /problems:
+    get:
+      tags: [Problems]
+      summary: Get all problems
+      responses:
+        200:
+          description: List of problems
+    post:
+      tags: [Problems]
+      summary: Create a new problem
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Problem'
+      responses:
+        201:
+          description: Problem created
+
+  /problems/{id}:
+    get:
+      tags: [Problems]
+      summary: Get a problem by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        200:
+          description: Problem found
+    put:
+      tags: [Problems]
+      summary: Update a problem
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Problem'
+      responses:
+        200:
+          description: Problem updated
+
+  /submissions:
+    post:
+      tags: [Submissions]
+      summary: Submit code for a problem
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Submission'
+      responses:
+        200:
+          description: Submission result
+
+  /submissions/user/{userId}:
+    get:
+      tags: [Submissions]
+      summary: Get a user's submission history
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        200:
+          description: List of submissions
